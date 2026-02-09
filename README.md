@@ -1,88 +1,49 @@
 # Narrative Coherence Analyzer
 
-A vector function that analyzes the narrative structure of startup pitches, returning a 7-dimensional probability distribution across canonical narrative elements.
+A vector function that analyzes the narrative structure of startup pitches, producing a probability distribution across seven canonical narrative elements.
 
 ## Overview
 
-This function examines startup pitches (in text, image, audio, video, or composite formats) and evaluates how strongly each of seven fundamental narrative elements is present. The output is a probability distribution where each value represents the relative strength of that narrative element within the pitch.
+This function evaluates startup pitches against seven foundational narrative elements that answer the essential questions stakeholders ask:
 
-## Narrative Elements
-
-The function analyzes the following seven canonical elements:
-
-| Index | Element | Description |
-|-------|---------|-------------|
-| 0 | **Problem** | Clear articulation of pain point or market gap |
-| 1 | **Solution** | Proposed offering addressing the identified problem |
-| 2 | **Market** | Target audience, size, and growth opportunity |
-| 3 | **Business Model** | Revenue generation and value capture strategy |
-| 4 | **Traction/Proof** | Evidence of progress, validation, or market fit |
-| 5 | **Team/Execution** | Founder credibility and execution capability |
-| 6 | **Vision** | Long-term ambition and transformative potential |
+1. **Problem** - "Why should anyone care?"
+2. **Solution** - "What is the answer?"
+3. **Market** - "How big is the opportunity?"
+4. **Business Model** - "How will value be captured?"
+5. **Traction** - "Is this working?"
+6. **Team** - "Who will make this happen?"
+7. **Vision** - "Where is this going?"
 
 ## Input
 
-The function accepts a single `idea` field that can be:
+The function accepts pitches in multiple modalities:
 
-- **String**: Plain text pitch description
-- **Image**: Visual pitch deck slides or diagrams
-- **Audio**: Recorded pitch audio
-- **Video**: Video pitch presentation
-- **Array**: Composite of multiple formats (minimum 1 element)
-
-### Input Schema
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "idea": {
-      "anyOf": [
-        { "type": "string" },
-        { "type": "object", "properties": { "type": { "const": "image_url" } } },
-        { "type": "object", "properties": { "type": { "const": "input_audio" } } },
-        { "type": "object", "properties": { "type": { "const": "video_url" } } },
-        { "type": "array", "minItems": 1 }
-      ]
-    }
-  },
-  "required": ["idea"]
-}
-```
+- **Text**: Written pitch decks, executive summaries, or pitch scripts
+- **Image**: Visual pitch materials like slides or infographics
+- **Audio**: Recorded verbal pitches or demo day recordings
+- **Video**: Full audiovisual presentations
+- **Composite**: Arrays combining any of the above
 
 ## Output
 
-A 7-element vector of floating-point values that sum to approximately 1.0, representing a probability distribution across the narrative elements.
+Returns a vector of 7 scores (one per element) that sum to 1.0, representing the relative narrative strength distribution across elements.
 
-### Example Output
+Example output: `[0.15, 0.18, 0.12, 0.10, 0.20, 0.13, 0.12]`
 
-```json
-[0.18, 0.22, 0.15, 0.12, 0.08, 0.10, 0.15]
-```
+A well-balanced pitch produces roughly equal scores. An unbalanced pitch shows higher weights on emphasized elements and lower weights on neglected ones.
 
-This output indicates:
-- Solution (22%) is the dominant narrative element
-- Problem (18%) is strongly present
-- Market and Vision (15% each) are moderate
-- Business Model (12%) and Team (10%) are lighter
-- Traction (8%) is the least emphasized
+## Evaluation Criteria
 
-## Interpretation
+For each element, the function assesses:
 
-- **Balanced Distribution**: A pitch with roughly equal values (~14% each) covers all elements evenly
-- **Dominant Element**: A high value (>25%) indicates the pitch emphasizes that element heavily
-- **Absent Element**: A low value (<5%) suggests that narrative component is missing or weak
-
-## Execution Strategies
-
-The function supports both default and `swiss_system` execution strategies:
-
-- **Default**: Evaluates all 7 elements in a single pass
-- **Swiss System**: Splits evaluation into parallel sub-tasks for optimized execution
+1. **Presence**: Is the element explicitly addressed, implied, or absent?
+2. **Quality**: How compelling is the articulation if present?
+3. **Narrative Flow**: Does the element connect logically to the overall story?
 
 ## Use Cases
 
-- **Pitch Deck Analysis**: Identify narrative gaps in investor presentations
-- **Founder Coaching**: Guide entrepreneurs on strengthening weak narrative areas
-- **Competitive Analysis**: Compare narrative emphasis across different startups
-- **Due Diligence**: Quickly assess pitch completeness and balance
+- **Investor Screening**: Quickly identify structural strengths and weaknesses in pitches
+- **Founder Coaching**: Identify narrative gaps before high-stakes presentations
+- **Accelerator Assessment**: Benchmark cohort pitches and identify common weaknesses
+- **Competitive Analysis**: Understand competitor narrative positioning
+- **Longitudinal Tracking**: Measure narrative improvement across fundraising rounds
