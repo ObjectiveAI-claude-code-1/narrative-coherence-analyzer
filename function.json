@@ -1,6 +1,6 @@
 {
   "type": "vector.function",
-  "description": "Analyze the narrative structure of a startup pitch, producing a 7-element probability distribution over the canonical narrative elements: Problem, Solution, Market, Business Model, Traction, Team, and Vision. Higher scores indicate stronger presence and quality of that element. Scores sum to 1.0, revealing relative emphasis and identifying gaps in the startup story.",
+  "description": "Analyze startup pitch narrative structure, producing a 7-element probability distribution over: Problem, Solution, Market, Business Model, Traction, Team, Vision. Scores sum to 1.0, revealing relative strength and gaps.",
   "input_schema": {
     "type": "object",
     "description": "A startup pitch to analyze for narrative coherence across the seven canonical elements: Problem, Solution, Market, Business Model, Traction, Team, and Vision.",
