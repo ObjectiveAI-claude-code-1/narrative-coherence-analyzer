@@ -1,45 +1,53 @@
 # Narrative Coherence Analyzer
 
-A vector function with dynamic output length that analyzes the narrative structure of a startup pitch, identifying which elements of the canonical startup story are present and how strong each is.
+A vector function with fixed output length of 7 that analyzes the narrative structure of a startup pitch.
 
 ## Input Schema
 
-The input is an object with an `idea` field containing a single startup idea. The idea can be:
+The input is an object with an `idea` field. The `idea` field uses anyOf to accept:
 - A string (text pitch)
-- An image, audio, or video (multimodal pitch)
-- An array of the above (composite pitch)
+- An image (type: image)
+- An audio (type: audio)
+- A video (type: video)
+- An array of strings and/or multimodal elements (composite pitch)
 
+Example input schema structure:
 ```json
 {
-  "idea": "We're solving the $50B problem of food waste. Our AI-powered inventory system reduces spoilage by 40%. We have 50 restaurant customers, $200K ARR, growing 20% MoM. Founded by ex-Google engineers with 10 years in food tech. Vision: eliminate food waste globally."
+  "type": "object",
+  "properties": {
+    "idea": {
+      "anyOf": [
+        {"type": "string"},
+        {"type": "image"},
+        {"type": "audio"},
+        {"type": "video"},
+        {"type": "array", "items": {"anyOf": [{"type": "string"}, {"type": "image"}, {"type": "audio"}, {"type": "video"}]}}
+      ]
+    }
+  },
+  "required": ["idea"]
 }
 ```
 
 ## Output
 
-A vector of scores over the 7 canonical narrative elements, representing the strength of each element. Scores sum to 1.0.
+A vector of 7 scores (one per narrative element) summing to 1.
 
 ## Output Length
 
-Always 7 (fixed) - one score for each narrative element. Elements that are absent or weak receive low/zero scores.
-
-The 7 elements in order:
-1. Problem - What pain exists
-2. Solution - How the idea addresses it
-3. Market - Who has this pain and how many
-4. Business Model - How value is captured
-5. Traction/Proof - Evidence that it works
-6. Team/Execution - Why this team can do it
-7. Vision - Where this goes long-term
+Always 7 - one score for each canonical narrative element:
+1. Problem
+2. Solution
+3. Market
+4. Business Model
+5. Traction/Proof
+6. Team/Execution
+7. Vision
 
 ## Evaluation Criteria
 
-For each of the 7 narrative elements:
-
-1. **Presence**: Is the element explicitly addressed, implied, or absent?
-
-2. **Quality**: How compelling is the element if present? Is the problem clearly articulated? Is the solution believable? Is market data credible?
-
-3. **Narrative Flow**: Do elements connect logically? Does the story build to a compelling conclusion?
-
-Elements that are absent or very weak should receive near-zero scores. Strong elements should receive higher scores. The distribution reveals which parts of the startup story are strongest.
+For each of the 7 elements:
+1. **Presence**: Is it explicitly addressed, implied, or absent?
+2. **Quality**: How compelling is it if present?
+3. **Narrative Flow**: Do elements connect logically?

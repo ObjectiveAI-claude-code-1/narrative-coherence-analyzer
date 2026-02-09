@@ -1,6 +1,6 @@
 {
   "type": "vector.function",
-  "description": "Analyze startup pitch narrative structure, producing a 7-element probability distribution over: Problem, Solution, Market, Business Model, Traction, Team, Vision. Scores sum to 1.0, revealing relative strength and gaps.",
+  "description": "Analyze the narrative structure of a startup pitch, returning a 7-dimensional probability distribution across canonical pitch elements: Problem, Solution, Market, Business Model, Traction/Proof, Team/Execution, and Vision. The scores represent relative narrative weight devoted to each element, summing to 1.",
   "input_schema": {
     "type": "object",
     "description": "A startup pitch to analyze for narrative coherence across the seven canonical elements: Problem, Solution, Market, Business Model, Traction, Team, and Vision.",
@@ -53,7 +53,7 @@
   },
   "input_maps": [
     {
-      "$starlark": "[{'index': 0, 'name': 'PROBLEM', 'criteria': 'Is the problem explicitly stated, specific, significant, urgent, credible, and emotionally resonant?'}, {'index': 1, 'name': 'SOLUTION', 'criteria': 'Is the solution clearly described, understandable, fits the problem, defensible, elegant, and feasible?'}, {'index': 2, 'name': 'MARKET', 'criteria': 'Is market size stated, from credible sources, specific, accessible, growing, and segmented?'}, {'index': 3, 'name': 'BUSINESS MODEL', 'criteria': 'Is the model described, with clear money flow, aligned, scalable, defensible, and realistic?'}, {'index': 4, 'name': 'TRACTION', 'criteria': 'Is traction quantified, relevant, impressive, growing, quality customers, and current?'}, {'index': 5, 'name': 'TEAM', 'criteria': 'Are credentials listed, with domain expertise, track record, founder fit, completeness, and commitment?'}, {'index': 6, 'name': 'VISION', 'criteria': 'Is vision articulated, ambitious, plausible, specific, differentiated, and emotionally resonant?'}]"
+      "$starlark": "[{'index': i, 'name': ['PROBLEM', 'SOLUTION', 'MARKET', 'BUSINESS MODEL', 'TRACTION', 'TEAM', 'VISION'][i], 'criteria': ['Is the problem explicitly stated, specific, significant, urgent, and emotionally resonant? Is there validation evidence?', 'Is the solution clearly described, understandable, differentiated, feasible, and does it fit the problem?', 'Is market size quantified (TAM/SAM/SOM), methodology credible, growth discussed, competitive landscape acknowledged, segments identified?', 'Is the revenue model clear, pricing specified, unit economics discussed, model scalable, path to profitability shown?', 'Are metrics quantified, growth velocity shown, quality meaningful, third-party validations present?', 'Are backgrounds presented, domain expertise shown, track record demonstrated, team complete, why-us argument made?', 'Is vision articulated beyond immediate product, ambitious, credible, connected to current work, impact-focused?'][i]} for i in (input.get('_element_indices', range(7)) if hasattr(input, 'get') else input['_element_indices'] if '_element_indices' in input else range(7))]"
     }
   ],
   "tasks": [
@@ -67,7 +67,7 @@
             {
               "type": "text",
               "text": {
-                "$starlark": "'You are an expert startup pitch analyst evaluating the ' + map['name'] + ' articulation.\\n\\nEvaluation Criteria: ' + map['criteria'] + '\\n\\nRate the strength of this narrative element. Choose the single best answer.'"
+                "$starlark": "'You are an expert startup pitch analyst evaluating the ' + map['name'] + ' element in startup pitches.\\n\\nEvaluation Criteria: ' + map['criteria'] + '\\n\\nRate how much narrative weight is devoted to this element. Choose the single best answer.'"
               }
             }
           ]
@@ -75,39 +75,39 @@
         {
           "role": "user",
           "content": {
-            "$starlark": "[{'type': 'text', 'text': 'Evaluate the ' + map['name'] + ' in this startup pitch:\\n\\n' + input['idea']}] if type(input['idea']) == 'string' else [{'type': 'text', 'text': 'Evaluate the ' + map['name'] + ' in this startup pitch:'}] + ([input['idea']] if type(input['idea']) == 'dict' else [({'type': 'text', 'text': x} if type(x) == 'string' else x) for x in input['idea']])"
+            "$starlark": "[{'type': 'text', 'text': 'Evaluate the ' + map['name'] + ' element in this startup pitch:'}] + ([{'type': 'text', 'text': input['idea']}] if type(input['idea']) == 'string' else [input['idea']] if type(input['idea']) != 'list' else [({'type': 'text', 'text': x} if type(x) == 'string' else x) for x in input['idea']])"
           }
         }
       ],
       "responses": [
         {
-          "$starlark": "[{'type': 'text', 'text': 'Exceptional ' + map['name'] + ': All quality dimensions present'}]"
+          "$starlark": "[{'type': 'text', 'text': 'Dominant ' + map['name'] + ': This element dominates the pitch with extensive detail and compelling articulation'}]"
         },
         {
-          "$starlark": "[{'type': 'text', 'text': 'Strong ' + map['name'] + ': Most quality dimensions present'}]"
+          "$starlark": "[{'type': 'text', 'text': 'Strong ' + map['name'] + ': This element is clearly and thoroughly addressed'}]"
         },
         {
-          "$starlark": "[{'type': 'text', 'text': 'Moderate ' + map['name'] + ': Some quality dimensions lacking'}]"
+          "$starlark": "[{'type': 'text', 'text': 'Moderate ' + map['name'] + ': This element is present but could be stronger or more detailed'}]"
         },
         {
-          "$starlark": "[{'type': 'text', 'text': 'Weak ' + map['name'] + ': Vaguely implied or partial'}]"
+          "$starlark": "[{'type': 'text', 'text': 'Light ' + map['name'] + ': This element is mentioned briefly or only implied'}]"
         },
         {
-          "$starlark": "[{'type': 'text', 'text': 'Absent ' + map['name'] + ': Not articulated'}]"
+          "$starlark": "[{'type': 'text', 'text': 'Absent ' + map['name'] + ': This element is not articulated in the pitch'}]"
         }
       ],
       "output": {
-        "$starlark": "(lambda scores: [s / sum(scores) if sum(scores) > 0 else 1.0 / len(scores) for s in scores])([output[i]['scores'][0] * 1.0 + output[i]['scores'][1] * 0.75 + output[i]['scores'][2] * 0.5 + output[i]['scores'][3] * 0.25 + output[i]['scores'][4] * 0.0 for i in range(len(output))])"
+        "$starlark": "(lambda scores, total: [s / total if total > 0 else 1.0 / len(scores) for s in scores])([output[i]['scores'][0] * 4.0 + output[i]['scores'][1] * 3.0 + output[i]['scores'][2] * 2.0 + output[i]['scores'][3] * 1.0 + output[i]['scores'][4] * 0.0 for i in range(len(output))], sum([output[i]['scores'][0] * 4.0 + output[i]['scores'][1] * 3.0 + output[i]['scores'][2] * 2.0 + output[i]['scores'][3] * 1.0 + output[i]['scores'][4] * 0.0 for i in range(len(output))]))"
       }
     }
   ],
   "output_length": {
-    "$starlark": "len(input['_elements']) if '_elements' in input else 7"
+    "$starlark": "len(input['_element_indices']) if '_element_indices' in input else 7"
   },
   "input_split": {
-    "$starlark": "[{'idea': input['idea'], '_elements': [i]} for i in range(7)]"
+    "$starlark": "[{'idea': input['idea'], '_element_indices': [i]} for i in range(7)]"
   },
   "input_merge": {
-    "$starlark": "{'idea': input[0]['idea']} if len(input) == 7 else {'idea': input[0]['idea'], '_elements': [x for sub in input for x in sub['_elements']]}"
+    "$starlark": "{'idea': input[0]['idea']} if len(input) == 7 else {'idea': input[0]['idea'], '_element_indices': [x for sub in input for x in sub['_element_indices']]}"
   }
 }

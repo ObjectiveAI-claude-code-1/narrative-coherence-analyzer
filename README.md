@@ -1,99 +1,88 @@
 # Narrative Coherence Analyzer
 
-A vector function that analyzes the narrative structure of a startup pitch, producing a 7-element probability distribution over the canonical narrative elements.
+A vector function that analyzes the narrative structure of startup pitches, returning a 7-dimensional probability distribution across canonical narrative elements.
 
 ## Overview
 
-This function evaluates startup pitches across seven canonical narrative elements that comprise a compelling startup story:
+This function examines startup pitches (in text, image, audio, video, or composite formats) and evaluates how strongly each of seven fundamental narrative elements is present. The output is a probability distribution where each value represents the relative strength of that narrative element within the pitch.
 
-1. **Problem** - What pain exists and why it matters
-2. **Solution** - How the idea addresses the problem
-3. **Market** - Who has this pain and how many
-4. **Business Model** - How value is captured and monetized
-5. **Traction** - Evidence that it works
-6. **Team** - Why this team can execute
-7. **Vision** - Where this goes long-term
+## Narrative Elements
 
-## Output
+The function analyzes the following seven canonical elements:
 
-The output is a 7-element probability distribution that sums to 1.0, representing the relative strength of each narrative element in the pitch. Higher scores indicate stronger presence and quality of that element.
-
-For example, a pitch that only mentions the problem and solution might produce:
-```json
-[0.35, 0.30, 0.07, 0.07, 0.07, 0.07, 0.07]
-```
-
-While a comprehensive pitch with all elements might produce:
-```json
-[0.15, 0.14, 0.15, 0.14, 0.14, 0.14, 0.14]
-```
+| Index | Element | Description |
+|-------|---------|-------------|
+| 0 | **Problem** | Clear articulation of pain point or market gap |
+| 1 | **Solution** | Proposed offering addressing the identified problem |
+| 2 | **Market** | Target audience, size, and growth opportunity |
+| 3 | **Business Model** | Revenue generation and value capture strategy |
+| 4 | **Traction/Proof** | Evidence of progress, validation, or market fit |
+| 5 | **Team/Execution** | Founder credibility and execution capability |
+| 6 | **Vision** | Long-term ambition and transformative potential |
 
 ## Input
 
-The function accepts multimodal inputs:
+The function accepts a single `idea` field that can be:
 
-- **Text**: Pitch scripts, executive summaries, elevator pitches
-- **Images**: Pitch deck slides, infographics, one-pagers
-- **Audio**: Recorded elevator pitches, podcast clips
-- **Video**: Demo day recordings, pitch videos, product demos
-- **Arrays**: Composite pitches with multiple elements (e.g., slides + founder video)
+- **String**: Plain text pitch description
+- **Image**: Visual pitch deck slides or diagrams
+- **Audio**: Recorded pitch audio
+- **Video**: Video pitch presentation
+- **Array**: Composite of multiple formats (minimum 1 element)
 
-### Example Inputs
+### Input Schema
 
-**Text pitch:**
 ```json
 {
-  "idea": "We're solving the $50B annual problem of restaurant food waste. Our AI-powered inventory system reduces spoilage by 40%. We have 50 restaurant customers, $200K ARR, growing 20% MoM. Founded by ex-Google engineers with 10 years in food tech. Vision: eliminate food waste globally."
+  "type": "object",
+  "properties": {
+    "idea": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "object", "properties": { "type": { "const": "image_url" } } },
+        { "type": "object", "properties": { "type": { "const": "input_audio" } } },
+        { "type": "object", "properties": { "type": { "const": "video_url" } } },
+        { "type": "array", "minItems": 1 }
+      ]
+    }
+  },
+  "required": ["idea"]
 }
 ```
 
-**Image pitch (pitch deck slide):**
+## Output
+
+A 7-element vector of floating-point values that sum to approximately 1.0, representing a probability distribution across the narrative elements.
+
+### Example Output
+
 ```json
-{
-  "idea": {"type": "image_url", "image_url": {"url": "https://example.com/pitch-deck-slide.png"}}
-}
+[0.18, 0.22, 0.15, 0.12, 0.08, 0.10, 0.15]
 ```
 
-**Composite pitch (multiple slides + context):**
-```json
-{
-  "idea": [
-    {"type": "image_url", "image_url": {"url": "https://example.com/slide1.png"}},
-    {"type": "image_url", "image_url": {"url": "https://example.com/slide2.png"}},
-    "Additional context: We're targeting the B2B SaaS market with a freemium model."
-  ]
-}
-```
+This output indicates:
+- Solution (22%) is the dominant narrative element
+- Problem (18%) is strongly present
+- Market and Vision (15% each) are moderate
+- Business Model (12%) and Team (10%) are lighter
+- Traction (8%) is the least emphasized
 
-## Evaluation Criteria
+## Interpretation
 
-Each narrative element is evaluated on multiple dimensions:
+- **Balanced Distribution**: A pitch with roughly equal values (~14% each) covers all elements evenly
+- **Dominant Element**: A high value (>25%) indicates the pitch emphasizes that element heavily
+- **Absent Element**: A low value (<5%) suggests that narrative component is missing or weak
 
-### Problem
-- Presence, specificity, magnitude, urgency, credibility, emotional resonance
+## Execution Strategies
 
-### Solution
-- Presence, clarity, problem-solution fit, defensibility, elegance, feasibility
+The function supports both default and `swiss_system` execution strategies:
 
-### Market
-- Presence, credibility, specificity, accessibility, dynamics, segmentation
-
-### Business Model
-- Presence, clarity, alignment, scalability, defensibility, credibility
-
-### Traction
-- Presence, relevance, magnitude, trajectory, quality, recency
-
-### Team
-- Presence, relevant experience, track record, founder-market fit, completeness, commitment
-
-### Vision
-- Presence, ambition, plausibility, specificity, differentiation, emotional resonance
+- **Default**: Evaluates all 7 elements in a single pass
+- **Swiss System**: Splits evaluation into parallel sub-tasks for optimized execution
 
 ## Use Cases
 
-- **Investor Screening**: Quickly identify which narrative elements need work
-- **Pitch Coaching**: Provide structured feedback on pitch completeness
-- **Founder Self-Assessment**: Understand gaps in your startup story
-- **Accelerator Applications**: Evaluate narrative quality at scale
-- **Pitch Deck Analysis**: Assess deck coverage of key elements
+- **Pitch Deck Analysis**: Identify narrative gaps in investor presentations
+- **Founder Coaching**: Guide entrepreneurs on strengthening weak narrative areas
+- **Competitive Analysis**: Compare narrative emphasis across different startups
+- **Due Diligence**: Quickly assess pitch completeness and balance
